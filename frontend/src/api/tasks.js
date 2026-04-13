@@ -1,4 +1,4 @@
-import { apiRequest } from "./http";
+import { apiFileRequest, apiRequest } from "./http";
 
 export function listTasks(filters = {}) {
   const params = new URLSearchParams();
@@ -53,6 +53,10 @@ export function deleteTaskDocument(taskId, documentId) {
   return apiRequest(`/api/tasks/${taskId}/documents/${documentId}`, {
     method: "DELETE",
   });
+}
+
+export function getTaskDocument(documentId) {
+  return apiFileRequest(`/api/tasks/documents/${documentId}`);
 }
 
 function toTaskFormData(payload) {

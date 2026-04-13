@@ -33,3 +33,32 @@ export async function apiRequest(path, options = {}) {
 
   return data;
 }
+
+export async function apiFileRequest(path, options = {}) {
+  const token = localStorage.getItem("flowdesk.token");
+  const headers = new Headers(options.headers || {});
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+    const message = data?.message || data || "File request failed";
+    throw new Error(message);
+  }
+
+  return {
+    blob: await response.blob(),
+    contentType: response.headers.get("content-type") || "application/octet-stream",
+    disposition: response.headers.get("content-disposition") || "",
+  };
+}

@@ -5,6 +5,7 @@ import {
   deleteTask,
   deleteTaskDocument,
   getTask,
+  getTaskDocument,
   updateTask,
 } from "../../api/tasks";
 import { Badge } from "../../components/ui/Badge";
@@ -20,6 +21,7 @@ export function TaskDetailPage() {
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [documentActionError, setDocumentActionError] = useState("");
 
   useEffect(() => {
     async function loadTask() {
@@ -69,6 +71,37 @@ export function TaskDetailPage() {
     await refreshTasks();
   }
 
+  async function handlePreviewDocument(document) {
+    setDocumentActionError("");
+
+    try {
+      const file = await getTaskDocument(document.id);
+      const objectUrl = window.URL.createObjectURL(file.blob);
+      window.open(objectUrl, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60000);
+    } catch (err) {
+      setDocumentActionError(err.message);
+    }
+  }
+
+  async function handleDownloadDocument(document) {
+    setDocumentActionError("");
+
+    try {
+      const file = await getTaskDocument(document.id);
+      const objectUrl = window.URL.createObjectURL(file.blob);
+      const anchor = window.document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = document.originalFilename || `document-${document.id}.pdf`;
+      window.document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+    } catch (err) {
+      setDocumentActionError(err.message);
+    }
+  }
+
   if (loading) {
     return <p className="text-sm text-black/55">Loading task details...</p>;
   }
@@ -111,21 +144,27 @@ export function TaskDetailPage() {
           </label>
         </div>
 
+        {documentActionError ? <p className="text-sm text-red-600">{documentActionError}</p> : null}
+
         {task.documents?.length ? (
           <div className="space-y-3">
             {task.documents.map((document) => (
-              <div key={document.id} className="flex items-center justify-between rounded-[1.5rem] border border-black/10 px-4 py-4">
-                <a
-                  href={document.downloadUrl || `/api/tasks/documents/${document.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="min-w-0 truncate text-sm font-medium underline underline-offset-4"
-                >
-                  {document.originalFilename}
-                </a>
-                <Button variant="ghost" onClick={() => handleDeleteDocument(document.id)}>
-                  Remove
-                </Button>
+              <div key={document.id} className="flex flex-col gap-4 rounded-[1.5rem] border border-black/10 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{document.originalFilename}</p>
+                  <p className="mt-1 text-xs text-black/50">{document.contentType || "application/pdf"}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => handlePreviewDocument(document)}>
+                    Preview
+                  </Button>
+                  <Button variant="ghost" onClick={() => handleDownloadDocument(document)}>
+                    Download
+                  </Button>
+                  <Button variant="ghost" onClick={() => handleDeleteDocument(document.id)}>
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
