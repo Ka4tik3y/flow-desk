@@ -2348,3 +2348,4 @@ Unconditional classes:
 2026-04-13T17:21:22.678+05:30 DEBUG 32168 --- [flow-desk] [nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
 2026-04-13T17:21:22.678+05:30 DEBUG 32168 --- [flow-desk] [nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Nothing to write: null body
 2026-04-13T17:21:22.679+05:30 DEBUG 32168 --- [flow-desk] [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+Terminate batch job (Y/N)? 
