@@ -6,6 +6,7 @@ import { Badge } from "../../components/ui/Badge";
 import { formatDate } from "../../utils/format";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "../../styles/index.css";
+import { TaskPreviewModal } from "./TaskPreviewModal";
 
 export function DashboardPage() {
   const [tasks, setTasks] = useState([]);
@@ -14,6 +15,7 @@ export function DashboardPage() {
   // Board columns by priority
   const priorities = ["HIGH", "MEDIUM", "LOW"];
   const [columns, setColumns] = useState({ HIGH: [], MEDIUM: [], LOW: [] });
+  const [previewTask, setPreviewTask] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -143,7 +145,8 @@ export function DashboardPage() {
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                                 style={provided.draggableProps.style}
-                               className={`rounded-xl border border-gray-200 bg-white p-4 shadow-md hover:shadow-lg transition-all flex flex-col gap-2 cursor-grab ${snapshot.isDragging ? "ring-2 ring-blue-400 z-50" : ""}`}
+                                onClick={() => setPreviewTask(task)}
+                               className={`rounded-xl border border-gray-200 bg-white p-4 shadow-md hover:shadow-lg transition-all flex flex-col gap-2 ${snapshot.isDragging ? "ring-2 ring-blue-400 z-50 cursor-grabbing" : "cursor-grab"}`}
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <span className="font-medium text-lg text-gray-900 truncate" title={task.title}>{task.title}</span>
@@ -182,6 +185,9 @@ export function DashboardPage() {
           </DragDropContext>
         )}
       </main>
+      {previewTask && (
+        <TaskPreviewModal task={previewTask} onClose={() => setPreviewTask(null)} />
+      )}
     </div>
   );
 }

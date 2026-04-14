@@ -24,7 +24,7 @@ export function AppShell() {
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-white/55">Flow Desk</p>
               <h1 className="mt-4 max-w-[10ch] font-display text-6xl uppercase leading-[0.9] tracking-[0.06em]">
-                Task Control
+                Task Desk
               </h1>
               <p className="mt-4 max-w-xs text-sm leading-6 text-white/70">
                 Minimal task management surface for the FSD assignment, tuned for fast scanning and clean routing.
