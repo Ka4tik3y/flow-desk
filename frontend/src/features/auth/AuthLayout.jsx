@@ -2,8 +2,8 @@ import { Link, Outlet } from "react-router-dom";
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen bg-paper px-4 py-4 md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-card lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="min-h-screen bg-paper">
+      <div className="grid min-h-screen bg-white lg:grid-cols-[1.1fr_0.9fr]">
         <section className="relative overflow-hidden bg-black px-8 py-10 text-white md:px-12 md:py-14">
           <div className="noise absolute inset-0 opacity-70" />
           <div className="relative z-10 flex h-full flex-col justify-between">

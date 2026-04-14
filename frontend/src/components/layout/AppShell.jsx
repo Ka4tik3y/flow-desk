@@ -16,8 +16,8 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent px-4 py-4 md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white/75 shadow-card backdrop-blur-xl lg:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-transparent">
+      <div className="grid min-h-screen bg-white/75 backdrop-blur-xl lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="relative overflow-hidden border-b border-black/10 bg-black px-6 py-8 text-white lg:border-b-0 lg:border-r lg:border-white/10">
           <div className="noise absolute inset-0 opacity-60" />
           <div className="relative z-10 flex h-full flex-col">

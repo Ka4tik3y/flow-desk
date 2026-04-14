@@ -4,7 +4,7 @@ import { listTasks, updateTask, deleteTask } from "../../api/tasks"; // Import u
 import { Button } from "../../components/ui/Button"; // Import Button component
 import { Badge } from "../../components/ui/Badge";
 import { formatDate } from "../../utils/format";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "../../styles/index.css";
 
 export function DashboardPage() {
@@ -155,6 +155,19 @@ export function DashboardPage() {
                                   <span>{formatDate(task.dueDate)}</span>
                                 </div>
                                 <div className="text-xs text-black/40 truncate">{task.description}</div>
+                                {/* Action button to delete a task */}
+                                <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent drag from starting on button click
+                                      handleDeleteTask(task.id, task.priority);
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </Draggable>
