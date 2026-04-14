@@ -4,8 +4,6 @@ import { getTaskDocument } from "../../api/tasks";
 
 export function TaskPreviewModal({ task, onClose }) {
   if (!task) return null;
-
-  // Stop propagation to prevent clicks inside the modal from closing it via the overlay
   const handleModalContentClick = (e) => {
     e.stopPropagation();
   };

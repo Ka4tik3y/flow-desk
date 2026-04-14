@@ -70,7 +70,7 @@ public class StorageService {
         try {
             Files.deleteIfExists(root.resolve(storageName).normalize());
         } catch (IOException ignored) {
-            // Keep DB consistent even if file is already gone.
+    
         }
     }
 }

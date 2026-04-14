@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
-@PreAuthorize("hasRole('ADMIN')") // Secures all endpoints in this controller for ADMIN only
+@PreAuthorize("hasRole('ADMIN')") 
 public class UserController {
 
     private final UserService userService;

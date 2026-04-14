@@ -93,7 +93,6 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public Map<TaskPriority, List<Task>> getDashboardTasks(User currentUser) {
-        // This specification will fetch all non-paginated tasks created by or assigned to the user, unless they are an admin.
         Specification<Task> spec = (root, query, cb) -> {
             if (currentUser.getRole() == Role.ADMIN) {
                 return cb.conjunction(); // Admin sees all tasks

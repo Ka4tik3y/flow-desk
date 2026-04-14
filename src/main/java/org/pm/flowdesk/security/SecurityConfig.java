@@ -121,7 +121,6 @@ public class SecurityConfig {
                 if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
                     return bcrypt.matches(rawPassword, stored);
                 }
-                // Dev-only compatibility: allow legacy plaintext passwords after DB migration.
                 return rawPassword != null && rawPassword.toString().equals(stored);
             }
         };
