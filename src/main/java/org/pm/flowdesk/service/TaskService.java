@@ -53,7 +53,7 @@ public class TaskService {
                            User currentUser,
                            Pageable pageable) {
         Specification<Task> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+            var predicates = new ArrayList<Predicate>();
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
@@ -84,14 +84,14 @@ public class TaskService {
     }
 
     public Task getById(Long id, User currentUser) {
-        Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
+        var task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
         verifyTaskAccess(task, currentUser);
         return task;
     }
 
     @Transactional
     public Task create(TaskRequest request, MultipartFile[] files, User currentUser) {
-        Task task = new Task();
+        var task = new Task();
         applyTaskRequest(task, request, currentUser);
         task.setCreatedBy(currentUser);
         Task saved = taskRepository.save(task);
@@ -104,7 +104,7 @@ public class TaskService {
 
     @Transactional
     public Task update(Long id, TaskRequest request, MultipartFile[] files, User currentUser) {
-        Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
+        var task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
         verifyTaskAccess(task, currentUser);
 
         applyTaskRequest(task, request, currentUser);
@@ -119,7 +119,7 @@ public class TaskService {
 
     @Transactional
     public Task addDocuments(Long taskId, MultipartFile[] files, User currentUser) {
-        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Task not found"));
+        var task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Task not found"));
         verifyTaskAccess(task, currentUser);
         appendDocuments(task, files);
         task.setUpdatedAt(OffsetDateTime.now());
@@ -128,17 +128,17 @@ public class TaskService {
 
     @Transactional
     public void delete(Long id, User currentUser) {
-        Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
+        var task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
         verifyTaskAccess(task, currentUser);
 
-        List<String> storageFiles = task.getDocuments().stream().map(TaskDocument::getStorageFilename).toList();
+        var storageFiles = task.getDocuments().stream().map(TaskDocument::getStorageFilename).toList();
         taskRepository.delete(task);
         storageFiles.forEach(storageService::delete);
     }
 
     @Transactional(readOnly = true)
     public TaskDocument getDocument(Long documentId, User currentUser) {
-        TaskDocument document = taskDocumentRepository.findById(documentId)
+        var document = taskDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new NotFoundException("Document not found"));
         verifyTaskAccess(document.getTask(), currentUser);
         return document;
@@ -146,10 +146,10 @@ public class TaskService {
 
     @Transactional
     public void deleteDocument(Long taskId, Long documentId, User currentUser) {
-        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Task not found"));
+        var task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Task not found"));
         verifyTaskAccess(task, currentUser);
 
-        TaskDocument document = task.getDocuments().stream()
+        var document = task.getDocuments().stream()
                 .filter(d -> d.getId().equals(documentId))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Document not found for task"));
@@ -168,7 +168,7 @@ public class TaskService {
         task.setDueDate(request.getDueDate());
 
         if (request.getAssignedToId() != null) {
-            User assignee = userRepository.findById(request.getAssignedToId())
+            var assignee = userRepository.findById(request.getAssignedToId())
                     .orElseThrow(() -> new NotFoundException("Assigned user not found"));
             task.setAssignedTo(assignee);
         } else if (task.getAssignedTo() == null) {
@@ -180,14 +180,14 @@ public class TaskService {
         if (files == null || files.length == 0) {
             return;
         }
-        int nextCount = task.getDocuments().size() + files.length;
+        var nextCount = task.getDocuments().size() + files.length;
         if (nextCount > MAX_DOCS_PER_TASK) {
             throw new BadRequestException("A task can have at most 3 PDF documents");
         }
 
-        for (MultipartFile file : files) {
-            String storageName = storageService.storePdf(file);
-            TaskDocument doc = new TaskDocument();
+        for (var file : files) {
+            var storageName = storageService.storePdf(file);
+            var doc = new TaskDocument();
             doc.setTask(task);
             doc.setOriginalFilename(file.getOriginalFilename() == null ? "document.pdf" : file.getOriginalFilename());
             doc.setStorageFilename(storageName);
@@ -202,8 +202,8 @@ public class TaskService {
             return;
         }
 
-        Long uid = currentUser.getId();
-        boolean allowed = task.getCreatedBy() != null && task.getCreatedBy().getId().equals(uid)
+        var uid = currentUser.getId();
+        var allowed = task.getCreatedBy() != null && task.getCreatedBy().getId().equals(uid)
                 || task.getAssignedTo() != null && task.getAssignedTo().getId().equals(uid);
 
         if (!allowed) {
