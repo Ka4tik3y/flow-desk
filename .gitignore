@@ -1,5 +1,9 @@
 HELP.md
 target/
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -36,10 +40,16 @@ build/
 !.env.example
 *.log
 uploads/
-/frontend/node_modules/
-/frontend/dist/
-/frontend/.vite/
-/frontend/coverage/
-/frontend/.cache/
-/frontend/.eslintcache
-/frontend/*.tsbuildinfo
+
+### Frontend / Node ###
+node_modules/
+dist/
+.vite/
+coverage/
+.cache/
+.eslintcache
+*.tsbuildinfo
+
+### OS generated files ###
+.DS_Store
+Thumbs.db

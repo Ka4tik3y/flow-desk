@@ -1,119 +1,174 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { listTasks } from "../../api/tasks";
-import { EmptyState } from "../../components/ui/EmptyState";
-import { SectionHeading } from "../../components/ui/SectionHeading";
-import { StatBlock } from "../../components/ui/StatBlock";
+
+import { useEffect, useState } from "react";
+import { listTasks, updateTask, deleteTask } from "../../api/tasks"; // Import updateTask and deleteTask
+import { Button } from "../../components/ui/Button"; // Import Button component
 import { Badge } from "../../components/ui/Badge";
-import { formatDate, isOverdue } from "../../utils/format";
+import { formatDate } from "../../utils/format";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "../../styles/index.css";
 
 export function DashboardPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // Board columns by priority
+  const priorities = ["HIGH", "MEDIUM", "LOW"];
+  const [columns, setColumns] = useState({ HIGH: [], MEDIUM: [], LOW: [] });
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       try {
         const response = await listTasks();
-        setTasks(response.content || []);
+        const allTasks = response.content || [];
+        setTasks(allTasks);
+        // Group tasks by priority
+        const grouped = { HIGH: [], MEDIUM: [], LOW: [] };
+        allTasks.forEach((task) => {
+          if (grouped[task.priority]) grouped[task.priority].push(task);
+        });
+        setColumns(grouped);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     }
-
     load();
   }, []);
 
-  const stats = useMemo(() => {
-    const todo = tasks.filter((task) => task.status === "TODO").length;
-    const inProgress = tasks.filter((task) => task.status === "IN_PROGRESS").length;
-    const done = tasks.filter((task) => task.status === "DONE").length;
-    const overdue = tasks.filter((task) => task.status !== "DONE" && isOverdue(task.dueDate)).length;
+  async function onDragEnd(result) { // Make onDragEnd async
+    const { source, destination } = result;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
-    return { todo, inProgress, done, overdue };
-  }, [tasks]);
+    // Optimistic UI update
+    let movedTask = null;
+    setColumns((prevColumns) => {
+      if (source.droppableId === destination.droppableId) {
+        const newCol = Array.from(prevColumns[source.droppableId]);
+        const [optimisticMoved] = newCol.splice(source.index, 1);
+        newCol.splice(destination.index, 0, optimisticMoved);
+        return {
+          ...prevColumns,
+          [source.droppableId]: newCol,
+        };
+      }
+
+      const newSourceCol = Array.from(prevColumns[source.droppableId]);
+      const newDestCol = Array.from(prevColumns[destination.droppableId]);
+      const [optimisticMoved] = newSourceCol.splice(source.index, 1);
+      optimisticMoved.priority = destination.droppableId; // Update priority locally
+      newDestCol.splice(destination.index, 0, optimisticMoved);
+
+      movedTask = { ...optimisticMoved }; // Capture the moved task for backend update
+
+      return {
+        ...prevColumns,
+        [source.droppableId]: newSourceCol,
+        [destination.droppableId]: newDestCol,
+      };
+    });
+
+    if (movedTask) {
+      try {
+        // Send update to backend
+        await updateTask(movedTask.id, { ...movedTask, priority: destination.droppableId });
+      } catch (err) {
+        // If backend update fails, set an error.
+        // For a more robust solution, you might want to revert the UI state here.
+        setError("Failed to update task priority on the server: " + err.message);
+        console.error("Failed to update task priority:", err);
+      }
+    }
+  }
+
+  async function handleDeleteTask(taskId, priority) {
+    // Store current state for potential revert
+    const originalColumns = { ...columns };
+
+    // Optimistically remove the task from the UI
+    setColumns((prevColumns) => {
+      const newColumn = prevColumns[priority].filter((task) => task.id !== taskId);
+      return {
+        ...prevColumns,
+        [priority]: newColumn,
+      };
+    });
+
+    try {
+      await deleteTask(taskId);
+    } catch (err) {
+      // If backend update fails, revert the UI state
+      setColumns(originalColumns); // Revert to original state
+      setError("Failed to delete task on the server: " + err.message);
+      console.error("Failed to delete task:", err);
+    }
+  }
 
   return (
-    <div className="space-y-8">
-      <SectionHeading
-        eyebrow="Overview"
-        title="Assignment Workspace"
-        body="A minimal surface for task execution, status tracking, and quick inspection of the Spring Boot backend data."
-      />
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatBlock label="To Do" value={stats.todo} detail="Open work waiting to be picked up." />
-        <StatBlock label="In Progress" value={stats.inProgress} detail="Tasks currently being worked on." />
-        <StatBlock label="Done" value={stats.done} detail="Closed tasks already delivered." />
-        <StatBlock label="Overdue" value={stats.overdue} detail="Incomplete tasks past the due date." />
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
-        <div className="rounded-[2rem] border border-black/10 bg-white/80 p-6 shadow-card">
-          <div className="flex items-end justify-between border-b border-black/10 pb-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.32em] text-black/45">Latest Tasks</p>
-              <h3 className="mt-2 text-2xl font-semibold tracking-tight">Current queue</h3>
+    <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 p-0 m-0">
+      <header className="p-8 pb-4 mb-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Task Dashboard</h1>
+        <span className="text-base text-black/50 mt-2 md:mt-0">Drag and drop tasks between priorities</span>
+      </header>
+      <main className="flex-1 flex flex-col items-stretch justify-stretch overflow-x-auto">
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center text-lg text-black/50">Loading tasks...</div>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center text-red-600">{error}</div>
+        ) : (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex-1 flex gap-8 px-8 pb-8 pt-2 w-full h-full">
+              {priorities.map((priority) => (
+                <Droppable droppableId={priority} key={priority}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`flex-1 bg-white/90 rounded-2xl shadow-xl border border-gray-200 p-4 min-w-[320px] max-w-[400px] flex flex-col transition-all duration-200 ${snapshot.isDraggingOver ? "bg-blue-50" : ""}`}
+                    >
+                      <h2 className="text-xl font-semibold pb-2 mb-4 border-b border-gray-200 text-center uppercase tracking-wider text-gray-700">
+                        {priority} Priority
+                      </h2>
+                      <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2"> {/* Added overflow-y-auto and pr-2 for scrollbar */}
+                        {columns[priority].length === 0 && (
+                          <div className="text-center text-black/30 py-8">No tasks</div>
+                        )}
+                        {columns[priority].map((task, idx) => (
+                          <Draggable draggableId={String(task.id)} index={idx} key={task.id}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={provided.draggableProps.style}
+                               className={`rounded-xl border border-gray-200 bg-white p-4 shadow-md hover:shadow-lg transition-all flex flex-col gap-2 cursor-grab ${snapshot.isDragging ? "ring-2 ring-blue-400 z-50" : ""}`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium text-lg text-gray-900 truncate" title={task.title}>{task.title}</span>
+                                  <Badge value={task.status} tone={task.status === "DONE" ? "muted" : "default"} />
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-xs text-black/55">
+                                  <span className="text-gray-600">{task.assignedTo?.username || "Unassigned"}</span>
+                                  <span>/</span>
+                                  <span>{formatDate(task.dueDate)}</span>
+                                </div>
+                                <div className="text-xs text-black/40 truncate">{task.description}</div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    </div>
+                  )}
+                </Droppable>
+              ))}
             </div>
-            <Link to="/tasks" className="text-sm text-black/55 underline underline-offset-4">
-              Open task routes
-            </Link>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            {loading ? (
-              <p className="text-sm text-black/50">Loading tasks...</p>
-            ) : error ? (
-              <p className="text-sm text-red-600">{error}</p>
-            ) : tasks.length === 0 ? (
-              <EmptyState title="No tasks yet" body="Create your first task from the task route to populate the workspace." />
-            ) : (
-              tasks.slice(0, 6).map((task) => (
-                <Link
-                  key={task.id}
-                  to={`/tasks/${task.id}`}
-                  className="flex flex-col gap-3 rounded-[1.5rem] border border-black/10 px-4 py-4 transition hover:-translate-y-0.5 hover:border-black"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <h4 className="text-base font-medium text-black">{task.title}</h4>
-                    <Badge value={task.status} tone={task.status === "DONE" ? "muted" : "default"} />
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-black/55">
-                    <span>{task.assignedTo?.username || "Unassigned"}</span>
-                    <span>/</span>
-                    <span>{task.priority}</span>
-                    <span>/</span>
-                    <span>{formatDate(task.dueDate)}</span>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-[2rem] border border-black/10 bg-black p-6 text-white shadow-card">
-          <p className="text-xs uppercase tracking-[0.32em] text-white/45">Routing</p>
-          <h3 className="mt-3 font-display text-4xl uppercase leading-none tracking-[0.04em]">Clean Path Map</h3>
-          <div className="mt-6 space-y-4 text-sm text-white/72">
-            <div className="rounded-[1.5rem] border border-white/10 p-4">
-              <p className="font-medium text-white">Public</p>
-              <p className="mt-2">`/login`, `/register`</p>
-            </div>
-            <div className="rounded-[1.5rem] border border-white/10 p-4">
-              <p className="font-medium text-white">Protected</p>
-              <p className="mt-2">`/`, `/tasks`, `/tasks/:taskId`, `/profile`</p>
-            </div>
-            <div className="rounded-[1.5rem] border border-white/10 p-4">
-              <p className="font-medium text-white">Admin</p>
-              <p className="mt-2">`/users`</p>
-            </div>
-          </div>
-        </div>
-      </section>
+          </DragDropContext>
+        )}
+      </main>
     </div>
   );
 }
