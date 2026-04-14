@@ -114,3 +114,15 @@ Example:
 ```bash
 ./mvnw test
 ```
+
+## Frontend on Vercel
+
+If you deploy the React app to Vercel:
+
+- Set **Root Directory** to `frontend`
+- Framework preset: **Vite**
+- Build command: `npm run build`
+- Output directory: `dist`
+- Add env var: `VITE_API_BASE_URL=https://<your-backend-host>`
+
+The SPA rewrite is configured in `frontend/vercel.json` so routes like `/tasks/123` open correctly.
