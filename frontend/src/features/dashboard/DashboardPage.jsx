@@ -86,8 +86,6 @@ export function DashboardPage() {
         // Send update to backend
         await updateTask(movedTask.id, { ...movedTask, priority: destination.droppableId });
       } catch (err) {
-        // If backend update fails, set an error.
-        // For a more robust solution, you might want to revert the UI state here.
         setError("Failed to update task priority on the server: " + err.message);
         console.error("Failed to update task priority:", err);
       }
@@ -95,10 +93,7 @@ export function DashboardPage() {
   }
 
   async function handleDeleteTask(taskId, priority) {
-    // Store current state for potential revert
     const originalColumns = { ...columns };
-
-    // Optimistically remove the task from the UI
     setColumns((prevColumns) => {
       const newColumn = prevColumns[priority].filter((task) => task.id !== taskId);
       return {
@@ -110,7 +105,6 @@ export function DashboardPage() {
     try {
       await deleteTask(taskId);
     } catch (err) {
-      // If backend update fails, revert the UI state
       setColumns(originalColumns); // Revert to original state
       setError("Failed to delete task on the server: " + err.message);
       console.error("Failed to delete task:", err);

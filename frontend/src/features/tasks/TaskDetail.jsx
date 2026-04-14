@@ -4,10 +4,6 @@ export function TaskDetail() {
   const { taskId } = useParams();
   // The context is passed from the parent route element in TasksPage
   const { users, refreshTasks } = useOutletContext();
-
-  // In a real implementation, you would fetch task details here
-  // or get them from a parent state.
-
   return (
     <div>
       <h3 className="text-lg font-semibold">Task Details</h3>

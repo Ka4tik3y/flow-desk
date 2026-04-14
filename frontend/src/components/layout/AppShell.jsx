@@ -24,9 +24,9 @@ export function AppShell() {
               <h1 className="mt-4 max-w-[10ch] font-display text-6xl uppercase leading-[0.9] tracking-[0.06em]">
                 Task Desk
               </h1>
-              <p className="mt-4 max-w-xs text-sm leading-6 text-white/70">
+              {/* <p className="mt-4 max-w-xs text-sm leading-6 text-white/70">
                 Minimal task management surface for the FSD assignment, tuned for fast scanning and clean routing.
-              </p>
+              </p> */}
             </div>
 
             <nav className="mt-10 space-y-2">
