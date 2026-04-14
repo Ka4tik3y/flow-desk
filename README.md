@@ -93,6 +93,17 @@ To also remove DB/upload volumes:
 docker compose down -v
 ```
 
+## Production DB (Neon)
+
+For production, set backend env vars like:
+
+- `DB_URL=jdbc:postgresql://<neon-host>/<db>?sslmode=require&channelBinding=require`
+- `DB_USERNAME=<neon-user>`
+- `DB_PASSWORD=<neon-password>`
+- `APP_CORS_ALLOWED_ORIGINS=https://<your-vercel-domain>`
+
+Keep `SPRING_JPA_HIBERNATE_DDL_AUTO=update` (or change to `validate` once schema is stable).
+
 ## Key endpoints
 
 - `POST /api/auth/register`
@@ -126,3 +137,12 @@ If you deploy the React app to Vercel:
 - Add env var: `VITE_API_BASE_URL=https://<your-backend-host>`
 
 The SPA rewrite is configured in `frontend/vercel.json` so routes like `/tasks/123` open correctly.
+
+If you deployed from repo root by mistake, this repo now includes a root `vercel.json` that builds `frontend` and serves `frontend/dist`.
+
+### If `*.vercel.app` shows `ERR_CONNECTION_TIMED_OUT`
+
+1. In Vercel project settings, verify Root Directory is `frontend` (or use repo-root deploy with root `vercel.json`), build command resolves to Vite frontend build, and production deployment status is **Ready** (not Canceled/Errored).
+2. Redeploy and open the latest production URL from Vercel dashboard.
+3. Confirm `VITE_API_BASE_URL` is set in Vercel environment variables.
+4. Deploy backend separately (Render/Railway/Fly.io/VM). This Spring Boot backend is not meant to run as a long-running process on Vercel.
