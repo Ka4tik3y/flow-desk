@@ -7,8 +7,10 @@ import { formatDate } from "../../utils/format";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "../../styles/index.css";
 import { TaskPreviewModal } from "./TaskPreviewModal";
+import { useAuth } from "../auth/AuthContext";
 
 export function DashboardPage() {
+  const { token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,6 +21,13 @@ export function DashboardPage() {
 
   useEffect(() => {
     async function load() {
+      if (!token) {
+        setLoading(false);
+        setTasks([]);
+        setColumns({ HIGH: [], MEDIUM: [], LOW: [] });
+        setError("Unauthorized");
+        return;
+      }
       setLoading(true);
       try {
         const response = await listTasks();
@@ -37,7 +46,7 @@ export function DashboardPage() {
       }
     }
     load();
-  }, []);
+  }, [token]);
 
   async function onDragEnd(result) { // Make onDragEnd async
     const { source, destination } = result;

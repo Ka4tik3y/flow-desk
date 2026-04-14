@@ -27,7 +27,7 @@ export async function apiRequest(path, options = {}) {
     : await response.text();
 
   if (!response.ok) {
-    const message = data?.message || data || "Request failed";
+    const message = data?.message || data?.error || data || "Request failed";
     throw new Error(message);
   }
 
@@ -52,7 +52,7 @@ export async function apiFileRequest(path, options = {}) {
     const data = contentType.includes("application/json")
       ? await response.json()
       : await response.text();
-    const message = data?.message || data || "File request failed";
+    const message = data?.message || data?.error || data || "File request failed";
     throw new Error(message);
   }
 

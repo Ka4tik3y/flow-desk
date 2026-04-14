@@ -13,7 +13,7 @@ import { formatDate, isOverdue } from "../../utils/format";
 import { TaskForm } from "./TaskForm";
 
 export function TasksPage() {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
@@ -27,19 +27,46 @@ export function TasksPage() {
     assignedToId: "",
   });
 
+  function uniqueUsers(...groups) {
+    const byId = new Map();
+    groups.flat().forEach((entry) => {
+      if (entry?.id != null && !byId.has(entry.id)) {
+        byId.set(entry.id, entry);
+      }
+    });
+    return Array.from(byId.values()).sort((a, b) =>
+      (a.username || "").localeCompare(b.username || ""),
+    );
+  }
+
+  function usersFromTasks(taskItems) {
+    const fromTasks = (taskItems || []).flatMap((task) => [
+      task?.assignedTo,
+      task?.createdBy,
+    ]);
+    return uniqueUsers(user, fromTasks);
+  }
+
   async function loadData(activeFilters = filters) {
     setLoading(true);
     setError("");
 
     try {
-      const requests = [listTasks(activeFilters)];
-      if (isAdmin) {
-        requests.push(listUsers());
-      }
+      const taskResponse = await listTasks(activeFilters);
+      const taskItems = taskResponse.content || [];
+      setTasks(taskItems);
 
-      const [taskResponse, usersResponse] = await Promise.all(requests);
-      setTasks(taskResponse.content || []);
-      setUsers(isAdmin ? usersResponse?.content || [] : [user]);
+      if (isAdmin) {
+        try {
+          const usersResponse = await listUsers("", { size: "500" });
+          const dbUsers = usersResponse.content || [];
+          setUsers(uniqueUsers(dbUsers, usersFromTasks(taskItems)));
+        } catch {
+          setUsers(usersFromTasks(taskItems));
+        }
+      } else {
+        setUsers(usersFromTasks(taskItems));
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,8 +75,14 @@ export function TasksPage() {
   }
 
   useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      setTasks([]);
+      setError("Unauthorized");
+      return;
+    }
     loadData();
-  }, []);
+  }, [token, isAdmin, user?.id]);
 
   const selectedTaskId = location.pathname.split("/")[2];
   const selectedTask = useMemo(

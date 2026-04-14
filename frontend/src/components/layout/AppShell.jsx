@@ -7,9 +7,7 @@ export function AppShell() {
   const { user, isAdmin, logout } = useAuth();
   const location = useLocation();
 
-  const navItems = isAdmin
-    ? [...NAV_ITEMS, { to: "/users", label: "Users" }]
-    : NAV_ITEMS;
+  const navItems = [...NAV_ITEMS];
 
   function isCurrentRoute(pathname) {
     return pathname === "/" ? location.pathname === "/" : location.pathname.startsWith(pathname);

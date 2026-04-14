@@ -42,19 +42,55 @@ This project implements the FSD intern assignment requirements on top of your ex
 ```
 
 Default env vars (can be overridden):
-- `DB_URL=jdbc:postgresql://localhost:5432/flowdesk`
+- `DB_URL=jdbc:postgresql://localhost:5433/flowdesk`
 - `DB_USERNAME=postgres`
 - `DB_PASSWORD=postgres`
 - `JWT_SECRET=<base64-secret>`
 - `STORAGE_PATH=uploads`
+
+This app also supports loading variables from a project `.env` file (see `src/main/resources/application.properties`).
 
 Swagger UI:
 - `http://localhost:8080/swagger-ui/index.html`
 
 ## Run with Docker
 
+### Prerequisites
+- Docker Desktop (or Docker Engine + Compose plugin)
+
+### 1. Prepare environment
+Create a `.env` file from `.env.example` and set at least:
+- `POSTGRES_PASSWORD`
+- `DB_PASSWORD` (keep it same as `POSTGRES_PASSWORD`)
+- `JWT_SECRET` (base64-encoded secret)
+
+You can keep other defaults as-is.
+
+### 2. Start all services
+
 ```bash
-docker-compose up --build
+docker compose up --build -d
+```
+
+This starts:
+- PostgreSQL on `localhost:5433`
+- Spring Boot backend on `localhost:8080`
+- Frontend on `localhost:3000`
+
+### 3. Open the app
+- Frontend: `http://localhost:3000`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+
+### 4. Stop services
+
+```bash
+docker compose down
+```
+
+To also remove DB/upload volumes:
+
+```bash
+docker compose down -v
 ```
 
 ## Key endpoints

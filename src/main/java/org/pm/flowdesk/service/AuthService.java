@@ -36,17 +36,20 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String normalizedEmail = normalizeEmail(request.getEmail());
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new BadRequestException("Email already in use");
         }
-        if (userRepository.existsByUsername(request.getUsername())) {
+        String normalizedUsername = normalizeUsername(request.getUsername());
+        if (userRepository.existsByUsername(normalizedUsername)) {
             throw new BadRequestException("Username already in use");
         }
 
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
+        user.setUsername(normalizedUsername);
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        // New users are registered with the USER role by default.
         user.setRole(Role.USER);
 
         User saved = userRepository.save(user);
@@ -56,15 +59,30 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String normalizedEmail = normalizeEmail(request.getEmail());
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(normalizedEmail, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
         UserDetails details = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken(details);
 
         return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase();
+    }
+
+    private String normalizeUsername(String username) {
+        if (username == null) {
+            return null;
+        }
+        return username.trim();
     }
 }

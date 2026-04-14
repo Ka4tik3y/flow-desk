@@ -21,13 +21,3 @@ export function PublicRoute() {
 
   return <Outlet />;
 }
-
-export function AdminRoute() {
-  const { isAdmin } = useAuth();
-
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <Outlet />;
-}

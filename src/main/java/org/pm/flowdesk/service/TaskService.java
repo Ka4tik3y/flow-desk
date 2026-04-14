@@ -25,6 +25,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -87,6 +89,26 @@ public class TaskService {
         var task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
         verifyTaskAccess(task, currentUser);
         return task;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<TaskPriority, List<Task>> getDashboardTasks(User currentUser) {
+        // This specification will fetch all non-paginated tasks created by or assigned to the user, unless they are an admin.
+        Specification<Task> spec = (root, query, cb) -> {
+            if (currentUser.getRole() == Role.ADMIN) {
+                return cb.conjunction(); // Admin sees all tasks
+            }
+            return cb.or(
+                    cb.equal(root.get("createdBy").get("id"), currentUser.getId()),
+                    cb.equal(root.get("assignedTo").get("id"), currentUser.getId())
+            );
+        };
+
+        List<Task> userTasks = taskRepository.findAll(spec);
+
+        // Group tasks by priority for the dashboard view
+        return userTasks.stream()
+                .collect(Collectors.groupingBy(Task::getPriority));
     }
 
     @Transactional
