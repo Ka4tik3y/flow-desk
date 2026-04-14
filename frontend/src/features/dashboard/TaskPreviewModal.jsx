@@ -1,5 +1,6 @@
 import { Badge } from "../../components/ui/Badge";
 import { formatDate } from "../../utils/format";
+import { getTaskDocument } from "../../api/tasks";
 
 export function TaskPreviewModal({ task, onClose }) {
   if (!task) return null;
@@ -7,6 +8,19 @@ export function TaskPreviewModal({ task, onClose }) {
   // Stop propagation to prevent clicks inside the modal from closing it via the overlay
   const handleModalContentClick = (e) => {
     e.stopPropagation();
+  };
+
+  const handlePreviewDocument = async (e, doc) => {
+    e.preventDefault();
+    try {
+      const { blob } = await getTaskDocument(doc.id);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000 * 60);
+    } catch (error) {
+      console.error("Failed to fetch document for preview", error);
+      alert("Failed to load document preview.");
+    }
   };
 
   return (
@@ -49,18 +63,16 @@ export function TaskPreviewModal({ task, onClose }) {
               <span className="font-medium text-gray-800 block mb-3">Attachments:</span>
               <div className="flex flex-wrap gap-2">
                 {task.documents.map((doc) => (
-                  <a
+                  <button
                     key={doc.id}
-                    href={doc.downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                    onClick={(e) => handlePreviewDocument(e, doc)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors cursor-pointer border border-transparent"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
                     {doc.originalFilename}
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
