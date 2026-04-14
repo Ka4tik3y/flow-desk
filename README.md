@@ -6,7 +6,7 @@ This project implements the FSD intern assignment requirements on top of your ex
 
 1. Domain schema
 - Added `User` role support and uniqueness constraints.
-- Added `Task` and `TaskDocument` entities with relationships.
+- Added `Task` and `TaskDocument` entities with relationships
 
 2. Security
 - JWT login/registration.
